@@ -4,17 +4,17 @@ function Fuckscript(str) {
   let work = 0;
   const vars = {};
   const bf = (s) => {
-    out += s
+    out += s;
   };
   const point = (a) => {
     if (a == ptr) return;
     bf(((a > ptr) ? '>': '<').repeat(Math.abs(a - ptr)));
     ptr = a;
-  }
+  };
   const move = (f, t) => {
     point(f); bf('[-'); point(t);
     bf('+'); point(f); bf(']');
-  }
+  };
   const copy = (f, t, tmp = work) => {
     //move from src to target and temp
     point(f); bf('[-'); point(t);
@@ -22,18 +22,18 @@ function Fuckscript(str) {
     point(f); bf(']');
     //move from temp to src
     move(tmp, f);
-  }
+  };
   const clear = (a, large) => {
     point(a); bf(large ? '[+]': '[-]');
-  }
+  };
   const setAt = (at, val, opt) => {
     const b = (val > 128);
     const c = (b ? '-': '+').repeat(b ? (128-(val-128)): val);
     clear(at, opt); point(at); bf(c);
-  }
+  };
   const notify = (mv) => {
     ptr += mv;
-  }
+  };
   var types = {
     nil: {
       name: 'nil',
@@ -58,7 +58,7 @@ function Fuckscript(str) {
         setAt(t.ptr+1, v & 0xff);
       }
     }
-  }
+  };
   var opHandlers = {
     add_u8_u8_u8: (a, b, t) => {
       copy(a.ptr, work, work+1);
@@ -75,8 +75,8 @@ function Fuckscript(str) {
       move(work, t.ptr);
     },
     mul_u8_u8_u8: (a, b, t) => {
-      copy(a.ptr, work, work+1)
-      copy(b.ptr, work+1, work+2)
+      copy(a.ptr, work, work+1);
+      copy(b.ptr, work+1, work+2);
       point(work);
       bf('[->[->+>+<<]>>[-<<+>>]<<<]>[-]>');
       notify(2);
@@ -93,13 +93,32 @@ function Fuckscript(str) {
       clear(t.ptr+1);
       move(work, t.ptr);
       move(work+1, t.ptr+1);
+    },
+    cast_u8_u8: (a, t) => {
+      clear(t.ptr);
+      copy(a.ptr, t.ptr);
+    },
+    cast_u16_u16: (a, t) => {
+      clear(t.ptr+1);
+      clear(t.ptr);
+      copy(a.ptr + 1, t.ptr + 1);
+      copy(a.ptr, t.ptr);
+    },
+    cast_u8_u16: (a, t) => {
+      clear(t.ptr+1);
+      clear(t.ptr);
+      copy(a.ptr, t.ptr + 1);
+    },
+    cast_u16_u8: (a, t) => {
+      clear(t.ptr);
+      copy(a.ptr+1, t.ptr);
     }
-  }
+  };
   /*const opTypes = {
     ['+']: 'add',
     ['-']: 'sub',
     ['*']: 'mul'
-  }*/
+    }*/
   let lines = str.split('\n').map((v) => {
     return v.trim();
   }).filter((v) => !!v);
@@ -123,7 +142,7 @@ function Fuckscript(str) {
             type: type,
             len: args[1],
             size: types[type].size(args[1])
-          }
+          };
           vars[name] = nv;
           //const sortedVars = Object.entries(vars).sort((a,b) => a[1].ptr - b[1].ptr);
           const occupiedCells = new Array(work).fill(false);
@@ -155,20 +174,18 @@ function Fuckscript(str) {
           }
           //todo search for right gap if cannot reuse
         } else {
-          /*let maxmem;
+          let maxmem;
           for (const [i, v] of Object.entries(vars)) {
             //console.log(JSON.stringify(v, null, 1));
-            if (v.ptr > (maxmem?.ptr ??0)) maxmem = v;
+            if (v.ptr > (maxmem?.ptr ?? -1)) maxmem = v;
           }
-          if (name === '*') name = maxmem.name;
           if (!vars[name]) {
             throw new Error('Trying to undefine a nonexistent variable '+name+' on line '+line);
           }
-          if (maxmem?.name === name) {
+          if (maxmem === vars[name]) {
             work -= types[maxmem.type].size(maxmem.size)
             console.log('shrinking');
-          }*/
-          //todo fix shriking
+          }
           delete vars[name];
         }
         break;
@@ -182,14 +199,22 @@ function Fuckscript(str) {
                 //setAt(setTarg.ptr, parseInt(args[2]));
                 break;
               case 'op':
-                const op = args[2];
-                const a = vars[args[3]];
-                const b = vars[args[4]];
-                if (!a) throw new Error('invalid operand a');
-                if (!b) throw new Error('invalid operand b');
-                const opName = op+'_'+a.type+'_'+b.type+'_'+setTarg.type;
-                if (!opHandlers[opName]) throw new Error('cant '+opName);
-                opHandlers[opName](a, b, setTarg);
+                if (1) {
+                  const op = args[2];
+                  const a = vars[args[3]];
+                  const b = vars[args[4]];
+                  if (!a) throw new Error('invalid operand a');
+                  if (!b) throw new Error('invalid operand b');
+                  const opName = op+'_'+a.type+'_'+b.type+'_'+setTarg.type;
+                  if (!opHandlers[opName]) throw new Error('cant '+opName);
+                  opHandlers[opName](a, b, setTarg);
+                }
+                break;
+              case 'var':
+                const from = vars[args[2]];
+                const castName = 'cast_'+from.type+'_'+setTarg.type;
+                opHandlers[castName](from, setTarg);
+                //types[setTarg.type].setMem(setTarg, vars[args[2]]);
                 break;
             }
             break;
