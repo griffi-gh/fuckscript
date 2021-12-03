@@ -194,8 +194,14 @@ function Fuckscript(str) {
           case 'set':
             const setTarg = vars[args[0]];
             switch (args[1].toLowerCase().trim()) {
-              case 'const':
-                types[setTarg.type].set(setTarg, args[2]);
+              case 'val':
+                let cval = args[2].trim();
+                if (cval[2] == '"' && cval[0] == '"' && (cval.length === 3)) {
+                  cval = cval.charCodeAt(1);
+                } else {
+                  cval = parseInt(cval);
+                }
+                types[setTarg.type].set(setTarg, cval);
                 //setAt(setTarg.ptr, parseInt(args[2]));
                 break;
               case 'op':
@@ -218,7 +224,23 @@ function Fuckscript(str) {
                 break;
             }
             break;
+          case 'print':
+            const prnt = vars[args[0]];
+            const ptype = types[prnt.type];
+            if (ptype.print && !(args[1] === 'raw')) {
+              ptype.print(prnt);
+            } else {
+              if (!ptype.print) {
+                console.log(ptype.name+' doesn\'t implement print');
+              }
+              point(prnt.ptr);
+              bf('.');
+            }
+            break;
           default:
+            if (cmd.startsWith('//')) {
+              break;
+            }
             throw new Error('Uknown cmd');
             break;
         }
