@@ -181,6 +181,8 @@ function Fuckscript(str) {
     }
     delete vars[name];
   }
+  const stack = {}
+  //
   let lines = str.split('\n').map((v) => {
     return v.trim();
   }).filter((v) => !!v);
@@ -188,16 +190,13 @@ function Fuckscript(str) {
     let cmd = v.split(' ');
     let args = cmd.slice(1).join(' ').split(' ');
     cmd = cmd[0];
+    const fcmd = cmd.slice(1);
     switch (cmd[0]) {
       case '-':
-        if (0)break;
+        undefine(fcmd);
+        break;
       case '+':
-        let name = cmd.slice(1);
-        if (cmd[0] === '+') {
-          define(name, args[0], ...args.slice(1))
-        } else {
-          undefine(name);
-        }
+        define(fcmd, args[0], ...args.slice(1))
         break;
       default:
         switch (cmd.toLowerCase().trim()) {
@@ -229,7 +228,6 @@ function Fuckscript(str) {
                 const from = vars[args[2]];
                 const castName = 'cast_'+from.type+'_'+setTarg.type;
                 opHandlers[castName](from, setTarg);
-                //types[setTarg.type].setMem(setTarg, vars[args[2]]);
                 break;
             }
             break;
@@ -246,6 +244,9 @@ function Fuckscript(str) {
               bf('.');
             }
             break;
+          case 'bf':
+            bf(args.join(''));
+            break;
           default:
             if (cmd.startsWith('//')) {
               break;
@@ -256,15 +257,23 @@ function Fuckscript(str) {
         break;
     }
   });
-  let cont = true;
+  //check
+  let pcnt = 0;
+  for (const char of out) {
+    if (char == '[') pcnt++;
+    if (char == ']') pcnt--;
+  }
+  if (pcnt) throw new Error('Invalid brainfuck code');
+  //optimize
   const nops = [
     /\>\</g,
     /\<\>/g,
     /\+\-/g,
     /\-\+/g,
     /\[\-\]\[\-\]/g,
-    /\[\]/g,
+    /\[\]/g
   ]
+  let cont = true;
   while (cont) {
     cont = false;
     nops.forEach(v => {
@@ -273,6 +282,14 @@ function Fuckscript(str) {
         return '';
       })
     });
+  }
+  //remove trailing moves
+  while (true) {
+    if (out.endsWith('<') || out.endsWith('>')) {
+      out = out.slice(0, -1);
+    } else {
+      break;
+    }
   }
   console.log('out '+out);
   return out;

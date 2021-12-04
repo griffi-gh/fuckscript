@@ -5,14 +5,19 @@ document.addEventListener("DOMContentLoaded", ()=> {
     out.value = Fuckscript(inp.value);
   });
   document.getElementById('cp').addEventListener("click", () => {
-    navigator.clipboard.writeText(out.value).then(() => {
-      alert('copied!');
-    }).catch(() => {
-      alert('failed');
-    });
-  })
-  inp.value = localStorage.sav ?? '';
-  inp.addEventListener('input', () => {
-    localStorage.sav = inp.value;
+    try {
+      navigator.clipboard.writeText(out.value).then(() => {
+        alert('copied!');
+      });
+    } catch(e) {
+      out.select();
+      document.execCommand("copy");
+      alert('copied');
+    }
   });
+  inp.value = localStorage.sav ?? '';
+  inp.addEventListener('input',
+    () => {
+      localStorage.sav = inp.value;
+    });
 });
