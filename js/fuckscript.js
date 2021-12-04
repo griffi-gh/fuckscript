@@ -119,6 +119,68 @@ function Fuckscript(str) {
     ['-']: 'sub',
     ['*']: 'mul'
     }*/
+  const define = (name, type, ...params) => {
+    type = type || 'u8';
+    if (vars[name]) {
+      throw new Error('Redefinition of variable '+name+' on line '+i);
+    }
+    const nv = {
+      name: name,
+      ptr: work,
+      type: type,
+      size: types[type].size(...params),
+      params: params,
+    };
+    if (types[type].onPreDefine) {
+      types[type].onPreDefine(nv);
+    }
+    vars[name] = nv;
+    const occupiedCells = new Array(work).fill(false);
+    for (const [i, v] of Object.entries(vars)) {
+      for (let j = v.ptr; j < (v.ptr+v.size); j++) {
+        occupiedCells[j] = v;
+      }
+    }
+    let blockStart;
+    let freeSize = 0;
+    const shouldAllocate = occupiedCells.every((v, i) => {
+      if (v) {
+        if (freeSize >= nv.size) {
+          return false;
+        }
+        freeSize = 0;
+      } else {
+        if (freeSize == 0) blockStart = i;
+        freeSize++;
+      }
+      return true;
+    });
+    if (shouldAllocate) {
+      console.log('allocated '+name);
+      work += nv.size;
+    } else {
+      console.log('reuse block '+blockStart+' for var '+name)
+      nv.ptr = blockStart;
+    }
+    if (types[type].onDefine) {
+      types[type].onDefine(nv);
+    }
+    return nv;
+  };
+  const undefine = (name) => {
+    if (!vars[name]) {
+      throw new Error('Trying to undefine a nonexistent variable '+name);
+    }
+    let maxmem;
+    for (const [i, v] of Object.entries(vars)) {
+      if (v.ptr > (maxmem?.ptr ?? -1)) maxmem = v;
+    }
+    if (maxmem === vars[name]) {
+      work -= maxmem.size;
+      console.log('shrinking');
+    }
+    delete vars[name];
+  }
   let lines = str.split('\n').map((v) => {
     return v.trim();
   }).filter((v) => !!v);
@@ -132,61 +194,9 @@ function Fuckscript(str) {
       case '+':
         let name = cmd.slice(1);
         if (cmd[0] === '+') {
-          if (vars[name]) {
-            throw new Error('Redefinition of variable '+name+' on line '+i);
-          }
-          const type = args[0] || 'u8';
-          const nv = {
-            name: name,
-            ptr: work,
-            type: type,
-            len: args[1],
-            size: types[type].size(args[1])
-          };
-          vars[name] = nv;
-          //const sortedVars = Object.entries(vars).sort((a,b) => a[1].ptr - b[1].ptr);
-          const occupiedCells = new Array(work).fill(false);
-          for (const [i, v] of Object.entries(vars)) {
-            for (let j = v.ptr; j < (v.ptr+v.size); j++) {
-              occupiedCells[j] = v;
-            }
-          }
-          let blockStart;
-          let freeSize = 0;
-          const shouldAllocate = occupiedCells.every((v, i) => {
-            if (v) {
-              if (freeSize >= nv.size) {
-                return false;
-              }
-              freeSize = 0;
-            } else {
-              if (freeSize == 0) blockStart = i;
-              freeSize++;
-            }
-            return true;
-          });
-          if (shouldAllocate) {
-            console.log('allocated '+name);
-            work += nv.size;
-          } else {
-            console.log('reuse block '+blockStart+' for var '+name)
-            nv.ptr = blockStart;
-          }
-          //todo search for right gap if cannot reuse
+          define(name, args[0], ...args.slice(1))
         } else {
-          let maxmem;
-          for (const [i, v] of Object.entries(vars)) {
-            //console.log(JSON.stringify(v, null, 1));
-            if (v.ptr > (maxmem?.ptr ?? -1)) maxmem = v;
-          }
-          if (!vars[name]) {
-            throw new Error('Trying to undefine a nonexistent variable '+name+' on line '+line);
-          }
-          if (maxmem === vars[name]) {
-            work -= types[maxmem.type].size(maxmem.size)
-            console.log('shrinking');
-          }
-          delete vars[name];
+          undefine(name);
         }
         break;
       default:
@@ -202,7 +212,6 @@ function Fuckscript(str) {
                   cval = parseInt(cval);
                 }
                 types[setTarg.type].set(setTarg, cval);
-                //setAt(setTarg.ptr, parseInt(args[2]));
                 break;
               case 'op':
                 if (1) {
