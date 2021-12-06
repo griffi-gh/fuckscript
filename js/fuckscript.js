@@ -388,5 +388,6 @@ function Fuckscript(str) {
   }
   console.log('out '+out);
   console.log('DONE\n');
+  //change
   return out;
 }
