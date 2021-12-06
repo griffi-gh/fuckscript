@@ -1,3 +1,5 @@
+const randomStr = () => Math.random().toString(36).substr(2, 5);
+
 function Fuckscript(str) {
   let out = '';
   let ptr = 0;
@@ -46,6 +48,28 @@ function Fuckscript(str) {
       size: ()=>1,
       set: (t, val) => {
         setAt(t.ptr, parseInt(val));
+      },
+      isTrue: (t, res) => {
+        clear(res.ptr);
+        copy(t.ptr, res.ptr);
+      },
+      print: (t, as) => {
+        //from stackoverflow solution
+        const printAsInt = (`
+          >>++++++++++<<[->+>-[>+>>]>[+[-<+>]>+>>]<<<<<<]>>[-]>>>++++++++++<[->-[>+>>]>[+[-
+          <+>]>+>>]<<<<<]>[-]>>[>++++++[-<++++++++>]<.<<+>+>[-]]<[<[->-<]++++++[->++++++++
+          <]>.[-]]<<++++++[-<++++++++>]<.[-]<<[-<+>]<
+          `).replace(/\n/g, '');
+        copy(t.ptr, work, work+1);
+        point(work);
+        switch (as) {
+          default: //if none or 'ascii'
+            bf('.');
+            break;
+          case 'int':
+            bf(printAsInt);
+            break;
+        }
       }
     },
     u16: {
@@ -177,11 +201,25 @@ function Fuckscript(str) {
     }
     if (maxmem === vars[name]) {
       work -= maxmem.size;
+      /*if (!noCleanup) {
+        point(work);
+        for (let i = 0; i < maxmem.size; i++) {
+          bf('[-]>');
+        }
+        notify(maxmem.size);
+      }*/
       console.log('shrinking');
     }
     delete vars[name];
   }
-  const stack = {}
+  const stack = [];
+  initStackVal = function(v) {
+    v.owned = [];
+    v.clearOwned = () => {
+      v.owned.forEach(undefine);
+      v.owned = [];
+    }
+  }
   //
   let lines = str.split('\n').map((v) => {
     return v.trim();
@@ -193,9 +231,18 @@ function Fuckscript(str) {
     const fcmd = cmd.slice(1);
     switch (cmd[0]) {
       case '-':
+        /*if (args[0] != 'keep') {
+          const cv = vars[fcmd];
+          for (let i = 0; i < cv.size; i++) {
+            clear(cv.ptr + i);
+          }
+        }*/
         undefine(fcmd);
         break;
       case '+':
+        if (stack.length) {
+          stack.slice(-1)[0].owned.push(fcmd);
+        }
         define(fcmd, args[0], ...args.slice(1))
         break;
       default:
@@ -231,11 +278,58 @@ function Fuckscript(str) {
                 break;
             }
             break;
+          case 'if':
+            const targ = vars[args[0]];
+            const nnn = {
+              tmpvar: define('if-'+randomStr(), 'u8'),
+              type: 'if'
+            };
+            initStackVal(nnn);
+            types[targ.type].isTrue(targ, nnn.tmpvar);
+            stack.push(nnn);
+            point(nnn.tmpvar.ptr);
+            bf('[');
+            break;
+          case 'else':
+            const stkt = stack.slice(-1)[0];
+            if (stkt.type === 'if') {
+              point(work); bf('+');
+              point(stkt.tmpvar.ptr);
+              bf('[-]]+');
+              point(work);
+              bf('[-');
+              point(stkt.tmpvar.ptr);
+              bf('-');
+              point(work);
+              bf(']');
+              point(stkt.tmpvar.ptr);
+              bf('[');
+              stkt.hasElse = true;
+              stkt.clearOwned();
+            } else {
+              throw new Error('not an if');
+            }
+            break;
+          case 'end':
+            const popval = stack.pop();
+            switch (popval?.type) {
+              case 'if':
+                const tv = popval.tmpvar;
+                point(tv.ptr);
+                bf('[-]]');
+                undefine(tv.name);
+                break;
+              default:
+                throw new Error('Invalid end statement');
+                break;
+            }
+            popval.clearOwned();
+            break;
           case 'print':
             const prnt = vars[args[0]];
             const ptype = types[prnt.type];
             if (ptype.print && !(args[1] === 'raw')) {
-              ptype.print(prnt);
+              ptype.print(prnt, args[1]);
             } else {
               if (!ptype.print) {
                 console.log(ptype.name+' doesn\'t implement print');
@@ -256,6 +350,7 @@ function Fuckscript(str) {
         }
         break;
     }
+    //bf('\n');
   });
   //check
   let pcnt = 0;
