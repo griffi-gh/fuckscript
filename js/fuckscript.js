@@ -1,4 +1,5 @@
 const randomStr = () => Math.random().toString(36).substr(2, 5);
+const kfind = (object, value) => Object.keys(object).find(key => object[key] === value);
 
 function Fuckscript(str) {
   let out = '';
@@ -106,6 +107,15 @@ function Fuckscript(str) {
       notify(2);
       clear(t.ptr);
       move(work+2, t.ptr);
+    },
+    eq_u8_u8_u8: (a, b, t) => {
+      copy(a.ptr, work, work+1);
+      copy(b.ptr, work+1, work+2);
+      point(work);
+      bf('>[-<->]+<[>-<[-]]>');
+      notify(1);
+      clear(t.ptr);
+      move(work+1, t.ptr);
     },
     add_u16_u8_u16: (a, b, t) => {
       copy(a.ptr, work, work+1);
@@ -216,8 +226,8 @@ function Fuckscript(str) {
   initStackVal = function(v) {
     v.owned = [];
     v.clearOwned = () => {
-      v.owned.forEach(undefine);
-      v.owned = [];
+      v.owned.filter(n => vars[n]).forEach(undefine);
+      v.owned.length = 0;
     }
   }
   //
@@ -231,12 +241,17 @@ function Fuckscript(str) {
     const fcmd = cmd.slice(1);
     switch (cmd[0]) {
       case '-':
-        /*if (args[0] != 'keep') {
-          const cv = vars[fcmd];
-          for (let i = 0; i < cv.size; i++) {
-            clear(cv.ptr + i);
+        if (stack.length) {
+          const owned = stack.slice(-1)[0].owned;
+          const ref = vars[fcmd];
+          if (!(ref && owned.includes(fcmd) && !args.includes('a'))) {
+            throw new Error(
+              'local variable doesn\'t exist. '+
+              'use "a" flag to delete variables '+
+              'from other scopes. Keep in mind that +/- are not conditional'
+            );
           }
-        }*/
+        }
         undefine(fcmd);
         break;
       case '+':
@@ -310,6 +325,16 @@ function Fuckscript(str) {
               throw new Error('not an if');
             }
             break;
+          case 'for':
+            const nn = {
+              type: 'for',
+              target: vars[args[0]]
+            };
+            initStackVal(nn);
+            stack.push(nn);
+            point(nn.target.ptr);
+            bf('[-');
+            break;
           case 'end':
             const popval = stack.pop();
             switch (popval?.type) {
@@ -318,6 +343,10 @@ function Fuckscript(str) {
                 point(tv.ptr);
                 bf('[-]]');
                 undefine(tv.name);
+                break;
+              case 'for':
+                point(popval.target.ptr);
+                bf(']');
                 break;
               default:
                 throw new Error('Invalid end statement');
@@ -337,6 +366,9 @@ function Fuckscript(str) {
               point(prnt.ptr);
               bf('.');
             }
+            break;
+          case 'point':
+            point(vars[args[0]].ptr);
             break;
           case 'bf':
             bf(args.join(''));
