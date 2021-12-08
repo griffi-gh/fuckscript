@@ -15,7 +15,18 @@ document.addEventListener("DOMContentLoaded", ()=> {
       alert('copied');
     }
   });
-  inp.value = localStorage.sav ?? '';
+  inp.value = localStorage.sav ?? `
+  +a u8 //declare a var of type u8
+  +b    //type defaults to u8
+  set a val ","
+  set b val 10
+  for b
+  \x09print b int
+  \x09if b // if b>0
+  \x09\x09print a raw
+  \x09end
+  end
+  `;
   inp.addEventListener('input',
     () => {
       localStorage.sav = inp.value;

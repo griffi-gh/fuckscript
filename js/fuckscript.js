@@ -1,5 +1,6 @@
 const randomStr = () => Math.random().toString(36).substr(2, 5);
 const kfind = (object, value) => Object.keys(object).find(key => object[key] === value);
+const escapeRegExp = e => e.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
 function Fuckscript(str) {
   let out = '';
@@ -234,33 +235,76 @@ function Fuckscript(str) {
   const splitScript = str => str.split('\n').map((v) => v.trim()).filter((v) => !!v);
   let lines = splitScript(str);
   let proc = '';
-  //PREPROCESSOR
-  lines.every(v => {
-    //comments
-    if (v.startsWith('//')) return 1;
-    const com = v.indexOf('//');
-    v = v.slice(0, (com >= 0) ? com: v.length);
-    if(!v) return 1;
-    //commands
-    if (v[0] == '#') {
-      v = v.slice(1);
-      let args = v.split(' ');
-      const op = args[0];
-      args = op.slice(1);
-      switch (op) {
-        case 'define':
-          //TODO
-          break;
-        default:
-          throw new Error('invalid preprocessor cmd');
-          break;
-      }
-      return 1;
-    }
-    proc += v + '\n';
-    return 1;
-  });
-  lines = splitScript(proc);
+  if (1) {
+    let again = false;
+    let macros = {};
+    let curMacro;
+    //PREPROCESSOR
+    do {
+      again = false;
+      lines.every(v => {
+        //comments
+        if (v.startsWith('//')) return 1;
+        const com = v.indexOf('//');
+        v = v.slice(0, (com >= 0) ? com: v.length);
+        if (!v) return 1;
+        if (curMacro) {
+          const p = v.split(' ');
+          if (p[0] === '#end') {
+            if (p[1] === curMacro.name) {
+              curMacro = null;
+              return 1;
+            }
+          }
+          curMacro.content += v + '\n';
+          return 1;
+          //
+        } else if (v[0] == '#') {
+          //commands
+          v = v.slice(1);
+          let args = v.split(' ');
+          const op = args[0];
+          args = args.slice(1);
+          switch (op) {
+            case 'define':
+              const mn = args[0];
+              macros[mn] = {
+                name: mn,
+                args: args.slice(1),
+                content: ''
+              }
+              curMacro = macros[mn];
+              break;
+            default:
+              if (macros[op]) {
+                const macro = macros[op];
+                if (args.length !== macro.args.length) {
+                  throw new Error('invalid arg count');
+                }
+                let content = macro.content;
+                macro.args.forEach((v, i) => {
+                  content = content.replace(
+                    new RegExp(escapeRegExp('$'+v+'$'), 'g'),
+                    args[i]
+                  );
+                });
+                proc += content + '\n';
+                again = true;
+                return 1;
+              }
+              throw new Error('invalid preprocessor cmd or macro');
+              break;
+          }
+          return 1;
+        }
+        proc += v + '\n';
+        return 1;
+      });
+      lines = splitScript(proc);
+      // lines = lines.filter(v => v);
+      proc = '';
+    } while (again);
+  }
   //COMPILER
   lines.forEach((v, line) => {
     let cmd = v.split(' ');
