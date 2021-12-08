@@ -1,6 +1,8 @@
 const randomStr = () => Math.random().toString(36).substr(2, 5);
 const kfind = (object, value) => Object.keys(object).find(key => object[key] === value);
 
+//edit to test commit
+
 function Fuckscript(str) {
   let out = '';
   let ptr = 0;
