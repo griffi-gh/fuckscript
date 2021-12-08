@@ -60,7 +60,7 @@ function Fuckscript(str) {
           >>++++++++++<<[->+>-[>+>>]>[+[-<+>]>+>>]<<<<<<]>>[-]>>>++++++++++<[->-[>+>>]>[+[-
           <+>]>+>>]<<<<<]>[-]>>[>++++++[-<++++++++>]<.<<+>+>[-]]<[<[->-<]++++++[->++++++++
           <]>.[-]]<<++++++[-<++++++++>]<.[-]<<[-<+>]<
-          `).replace(/\n/g, '');
+          [-]`).replace(/\s/g, '');
         copy(t.ptr, work, work+1);
         point(work);
         switch (as) {
@@ -369,7 +369,7 @@ function Fuckscript(str) {
             break;
           case 'point':
             point(vars[args[0]].ptr);
-            break;
+            break
           case 'bf':
             bf(args.join(''));
             break;
