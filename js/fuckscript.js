@@ -231,9 +231,37 @@ function Fuckscript(str) {
     }
   }
   //
-  let lines = str.split('\n').map((v) => {
-    return v.trim();
-  }).filter((v) => !!v);
+  const splitScript = str => str.split('\n').map((v) => v.trim()).filter((v) => !!v);
+  let lines = splitScript(str);
+  let proc = '';
+  //PREPROCESSOR
+  lines.every(v => {
+    //comments
+    if (v.startsWith('//')) return 1;
+    const com = v.indexOf('//');
+    v = v.slice(0, (com >= 0) ? com: v.length);
+    if(!v) return 1;
+    //commands
+    if (v[0] == '#') {
+      v = v.slice(1);
+      let args = v.split(' ');
+      const op = args[0];
+      args = op.slice(1);
+      switch (op) {
+        case 'define':
+          //TODO
+          break;
+        default:
+          throw new Error('invalid preprocessor cmd');
+          break;
+      }
+      return 1;
+    }
+    proc += v + '\n';
+    return 1;
+  });
+  lines = splitScript(proc);
+  //COMPILER
   lines.forEach((v, line) => {
     let cmd = v.split(' ');
     let args = cmd.slice(1).join(' ').split(' ');
