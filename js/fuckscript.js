@@ -85,7 +85,8 @@ function Fuckscript(str) {
       }
     }
   };
-  var opHandlers = {
+  var opHandlers;
+  opHandlers = {
     add_u8_u8_u8: (a, b, t) => {
       copy(a.ptr, work, work+1);
       copy(b.ptr, work, work+1);
@@ -118,6 +119,7 @@ function Fuckscript(str) {
       clear(t.ptr);
       move(work+1, t.ptr);
     },
+    // 16-BIT INTEGER OPERATIONS
     add_u16_u8_u16: (a, b, t) => {
       copy(a.ptr, work, work+1);
       copy(a.ptr+1, work+1, work+2);
@@ -129,6 +131,10 @@ function Fuckscript(str) {
       move(work, t.ptr);
       move(work+1, t.ptr+1);
     },
+    add_u8_u16_u16: (a, b, t) => {
+      opHandlers.add_u16_u8_u16(b, a, t);
+    },
+    //TYPE CASTS
     cast_u8_u8: (a, t) => {
       clear(t.ptr);
       copy(a.ptr, t.ptr);

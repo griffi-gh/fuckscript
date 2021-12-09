@@ -136,14 +136,28 @@ addEventListener('load', () => {
       console.log('start');
       document.getElementById('run').classList.add('running');
       loadProg(document.getElementById('program').value);
-      const fn = () => {
-        if (step()) {
-          int = setTimeout(fn, 0);
-        } else {
-          onStop('file end');
+      let SPED = () => parseFloat(document.getElementById('speed').value);
+      //console.log(SPED);
+      if (SPED() >= 0) {
+        const fn = () => {
+          if (step()) {
+            int = setTimeout(fn, SPED());
+          } else {
+            onStop('end');
+          }
+        };
+        fn();
+      } else {
+        const s = SPED();
+        if (s == -1) {
+          //Immed.
+          while (step()) {}
+          onStop('end');
+        } else if (s == -2) {
+          //TODO: Fast
+          //recompile bf to js
         }
-      };
-      fn();
+      }
     }
   });
 });

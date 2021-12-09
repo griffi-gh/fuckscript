@@ -14,17 +14,33 @@ header {
   justify-content: space-between;
   padding: 10px 15px;
 }
+#buttons {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  grid-gap: 10px;
+}
+#speed {
+  padding: .2rem .2rem;
+  font-size: 1.1em;
+  background: transparent;
+  border: none;
+  color: white;
+  text-align-last: right;
+  outline: 0px;
+}
 #run {
+  display: inline-block;
   transition: all .3s;
   width: 0;
   height: 0;
-  -webkit-transform: rotate(360deg);
+  transform: rotate(360deg);
   border-style: solid;
   border-width: 16px 0 16px 24px;
   border-color: transparent transparent transparent #ffffff;
 }
 #run.running {
-  border-color: red;
+  border-color: white;
   border-width: 16px 0 16px 32px;
   border-radius: 5px;
 }
@@ -34,12 +50,12 @@ header {
   font-size: 1.25rem;
   padding: 10px 5px;
   padding-right: 0;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
+  /*scrollbar-width: none;
+  -ms-overflow-style: none;*/
 }
-#cells::-webkit-scrollbar {
+/*#cells::-webkit-scrollbar {
   display: none;
-}
+}*/
 #cells .cell {
   border: 1px solid black;
   padding: 10px;
