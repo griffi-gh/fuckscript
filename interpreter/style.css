@@ -1,0 +1,56 @@
+* {
+  box-sizing: border-box;
+}
+body, html {
+  padding: 0;
+  margin: 0;
+  font-family: Arial;
+}
+header {
+  background: purple;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 15px;
+}
+#run {
+  transition: all .3s;
+  width: 0;
+  height: 0;
+  -webkit-transform: rotate(360deg);
+  border-style: solid;
+  border-width: 16px 0 16px 24px;
+  border-color: transparent transparent transparent #ffffff;
+}
+#run.running {
+  border-color: red;
+  border-width: 16px 0 16px 32px;
+  border-radius: 5px;
+}
+#cells {
+  display: flex;
+  overflow-x: scroll;
+  font-size: 1.25rem;
+  padding: 10px 5px;
+  padding-right: 0;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+#cells::-webkit-scrollbar {
+  display: none;
+}
+#cells .cell {
+  border: 1px solid black;
+  padding: 10px;
+}
+#cells .cell:not(:last-child) {
+  border-right: none;
+}
+#cells > .active {
+  background: yellow;
+}
+#program {
+  width: 100%;
+  font-size: 1.7rem;
+}
