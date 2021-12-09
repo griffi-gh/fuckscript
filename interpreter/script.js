@@ -1,4 +1,8 @@
 addEventListener('load', () => {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('c')) {
+    document.getElementById('program').value = params.get('c');
+  }
   const cells = [];
   const mem = new Uint8Array(30000);
   let ptr = 0;
@@ -51,16 +55,37 @@ addEventListener('load', () => {
   expandCellsTo(50);
   movePtr(0);
 
+  const out = document.getElementById('stdout');
+
   let prog = '';
-  let bracemap = {};
+  let bracemap = [];
+
+  function resetState() {
+    mem.fill(0);
+    cells.forEach(v => {
+      v.innerHTML = 0;
+    });
+    movePtr(0);
+    pc = 0;
+    out.value = '';
+  }
+
+  resetState();
 
   function loadProg(p) {
     prog = p;
+    //reset
+    resetState();
+    //build map
+    bracemap = new Array(prog.length).fill(null);
+    const stack = [];
     p.split('').forEach((v, i) => {
       if (v == '[') {
-        //
+        stack.push(i);
       } else if (v == ']') {
-        //
+        const back = stack.pop();
+        bracemap[back] = i;
+        bracemap[i] = back;
       }
     });
   }
@@ -81,24 +106,14 @@ addEventListener('load', () => {
           decCell();
           break;
         case '[':
-          if (!cellGet()) {
-            let cnt = 1;
-            while (cnt) {
-              char = prog[pc++];
-              if (char == ']') cnt--;
-              if (char == '[') cnt++;
-            }
-          }
+          if (!cellGet()) pc = bracemap[pc-1]+1;
           break;
         case ']':
-          if (cellGet()) {
-            let cnt = 1;
-            while (cnt) {
-              char = prog[--pc];
-              if (char == ']') cnt++;
-              if (char == '[') cnt--;
-            }
-          }
+          if (cellGet()) pc = bracemap[pc-1]+1;
+          break;
+        case '.':
+          out.value += String.fromCharCode(cellGet());
+          out.scrollTo(99999999, 9999999);
           break;
         default:
           break;
@@ -121,15 +136,9 @@ addEventListener('load', () => {
       console.log('start');
       document.getElementById('run').classList.add('running');
       loadProg(document.getElementById('program').value);
-      mem.fill(0);
-      cells.forEach(v => {
-        v.innerHTML = 0;
-      });
-      movePtr(0);
-      pc = 0;
       const fn = () => {
         if (step()) {
-          int = setTimeout(fn, 20);
+          int = setTimeout(fn, 0);
         } else {
           onStop('file end');
         }

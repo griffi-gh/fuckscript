@@ -54,3 +54,11 @@ header {
   width: 100%;
   font-size: 1.7rem;
 }
+#stdout {
+  display: block;
+  font-family: monospace;
+  min-height: 1em;
+  overflow-x: scroll;
+  font-size: 1.5rem;
+  white-space: nowrap;
+}
