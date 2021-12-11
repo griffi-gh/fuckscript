@@ -1,7 +1,45 @@
 addEventListener('load', () => {
+  const $id = id => document.getElementById(id);
+  window._$id_ = $id;
   const params = new URLSearchParams(window.location.search);
+  let autosave = true;
+  if (params.has('source')) {
+    const v = params.get('source');
+    if (v == 'fuckscript-run' || v == 'fuckscript-ad') {
+      setTimeout(() => $id('ad-close').click(), 3000);
+    }
+  }
+
+  $id('ad-close').style.fontSize = '0px';
+  setTimeout(() => $id('ad-close').style.fontSize = '', 2500);
+
   if (params.has('c')) {
-    document.getElementById('program').value = params.get('c');
+    if (!params.has('save')) autosave = false;
+    $id('program').value = params.get('c');
+  } else {
+    $id('program').value = localStorage.autosave ?? '';
+  }
+  if (autosave) {
+    $id('program').addEventListener('input', () => {
+      localStorage.autosave = $id('program').value;
+    });
+    autosave = true;
+    document.body.classList.add('autosave-enabled');
+  }
+  $id('reload-saved').addEventListener('click', evt => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    localStorage.autosave = $id('program').value;
+    document.location.href = '?'
+  });
+  $id('ad-close').addEventListener('click', evt => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    localStorage.adClosed = '1';
+    $id('fuckscript-ad').remove()
+  });
+  if ((localStorage.adClosed | 0) === 1) {
+    $id('fuckscript-ad').remove();
   }
   const cells = [];
   const mem = new Uint8Array(30000);
@@ -16,7 +54,7 @@ addEventListener('load', () => {
       const cell = document.createElement('div');
       cell.innerHTML = '0';
       cell.classList.add('cell');
-      document.getElementById('cells').appendChild(cell);
+      $id('cells').appendChild(cell);
       cells.push(cell);
     }
   }
@@ -48,14 +86,14 @@ addEventListener('load', () => {
     cellSet(cellGet() - 1);
   }
 
-  document.getElementById('cells').addEventListener('overscroll', () => {
+  $id('cells').addEventListener('overscroll', () => {
     expandCellsTo(cells.length + 50);
   });
 
   expandCellsTo(50);
   movePtr(0);
 
-  const out = document.getElementById('stdout');
+  const out = $id('stdout');
 
   let prog = '';
   let bracemap = [];
@@ -127,16 +165,16 @@ addEventListener('load', () => {
     console.log('stop; reason: '+r);
     clearInterval(int);
     int = null;
-    document.getElementById('run').classList.remove('running');
+    $id('run').classList.remove('running');
   }
-  document.getElementById('run').addEventListener('click', () => {
+  $id('run').addEventListener('click', () => {
     if (int) {
       onStop('user');
     } else {
       console.log('start');
-      document.getElementById('run').classList.add('running');
-      loadProg(document.getElementById('program').value);
-      let SPED = () => parseFloat(document.getElementById('speed').value);
+      $id('run').classList.add('running');
+      loadProg($id('program').value);
+      let SPED = () => parseFloat($id('speed').value);
       //console.log(SPED);
       if (SPED() >= 0) {
         const fn = () => {

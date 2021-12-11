@@ -28,6 +28,15 @@
     <div id="cells"></div>
     <output id="stdout"></output>
     <textarea name="" id="program" cols="30" rows="10"></textarea>
+    <div id="autosave-notice">
+      <br>Warning! Auto-save is disabled for this session!<br>
+      Click <a id="reload-saved" href="?" style="font-size: 1.1em">here</a> to save.
+      <a href="" onclick="event.preventDefault();_$id_('autosave-notice').remove()">Close</a>
+    </div>
+    <div id="fuckscript-ad">
+      <br>Try <a href="..">Fuckscript</a> - a simple language that compiles to Brainfuck
+      <br><a href="" id="ad-close">Close</a>
+    </div>
   </main>
 </body>
 </html>
