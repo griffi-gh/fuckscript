@@ -7,6 +7,9 @@ body, html {
   font-family: Arial;
 }
 header {
+  position: sticky;
+  top: 0;
+  box-shadow: 0 -2px 1rem black;
   background: purple;
   color: white;
   display: flex;
