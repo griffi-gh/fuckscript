@@ -56,6 +56,15 @@ addEventListener('load', () => {
       alert('copied');
     }
   });
+  $id('uploaded').addEventListener('change', () => {
+    const file = $id('uploaded').files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      $id('program').value = reader.result;
+      // todo if(reader.result.length >
+    };
+    reader.readAsText(file);
+  });
 
   const cells = [];
   const mem = new Uint8Array(30000);
@@ -176,6 +185,79 @@ addEventListener('load', () => {
     return (char && (pc < prog.length));
   }
 
+  function compile() {
+    const END = '\x00';
+    const SUBLOOP = String.fromCharCode(0xFFFF);
+
+    let js = 'let m=new Uint8Array(30000);let p=0;let o="";let c=String.fromCharCode;';
+    let num;
+    let ptrd;
+
+    let mprog = prog + END;
+    mprog.replace(/\[\-\]/g, SUBLOOP);
+    mprog.replace(/\[\+\]/g, SUBLOOP);
+
+    mprog.split('').forEach((v, i) => {
+      const hnum = () => {
+        if ((num != null) && !(v == '-' || v == '+' || v == 'SUBLOOP')) {
+          if (num) js += 'm[p]'+((num < 0) ? '-': '+')+'='+Math.abs(num)+';';
+          num = null;
+        }
+        if ((ptrd != null) && !(v == '<' || v == '>')) {
+          if (ptrd) js += 'p'+((ptrd < 0) ? '-': '+')+'='+Math.abs(ptrd)+';';
+          ptrd = null;
+        }
+      }
+      switch (v) {
+        case '-':
+          hnum();
+          num = (num ?? 0) - 1;
+          break;
+        case '+':
+          hnum();
+          num = (num ?? 0) + 1;
+          break;
+        case '<':
+          hnum();
+          ptrd = (ptrd ?? 0) - 1;
+          break;
+        case '>':
+          hnum();
+          ptrd = (ptrd ?? 0) + 1;
+          break;
+        case '[':
+          hnum();
+          js += 'while(m[p]){';
+          break;
+        case ']':
+          hnum();
+          js += '};';
+          break;
+        case '.':
+          hnum();
+          js += 'o+=c(m[p]);';
+          break;
+        case ',':
+          hnum();
+          //todo
+          break;
+        case END:
+          hnum();
+          break;
+        case SUBLOOP:
+          hnum();
+          num = null;
+          js += 'm[p]=0;'
+          break;
+        default:
+          break;
+      }
+    });
+    js += 'return [o,m,p]';
+    console.log(js)
+    return new Function(js);
+  }
+
   let int;
   function onStop(r) {
     console.log('stop; reason: '+r);
@@ -183,35 +265,56 @@ addEventListener('load', () => {
     int = null;
     $id('run').classList.remove('running');
   }
-  $id('run').addEventListener('click', () => {
-    if (int) {
-      onStop('user');
-    } else {
-      console.log('start');
-      $id('run').classList.add('running');
-      loadProg($id('program').value);
-      let SPED = () => parseFloat($id('speed').value);
-      //console.log(SPED);
-      if (SPED() >= 0) {
-        const fn = () => {
-          if (step()) {
-            int = setTimeout(fn, SPED());
-          } else {
-            onStop('end');
-          }
-        };
-        fn();
+  $id('run').addEventListener('click',
+    () => {
+      if (int) {
+        onStop('user');
       } else {
-        const s = SPED();
-        if (s == -1) {
-          //Immed.
-          while (step()) {}
-          onStop('end');
-        } else if (s == -2) {
-          //TODO: Fast
-          //recompile bf to js
+        console.log('start');
+        $id('run').classList.add('running');
+        loadProg($id('program').value);
+        let SPED = () => parseFloat($id('speed').value);
+        //console.log(SPED);
+        if (SPED() >= 0) {
+          const fn = () => {
+            if (step()) {
+              int = setTimeout(fn, SPED());
+            } else {
+              onStop('end');
+            }
+          };
+          fn();
+        } else {
+          const s = SPED();
+          if (s == -1) {
+            //Immed.
+            while (step()) {}
+            onStop('end');
+          } else if (s == -2) {
+            resetState();
+            const state = compile()();
+            const cptr = state.pop();
+            const cmem = state.pop();
+            const cout = state.pop();
+            //
+            let updateTo = 0;
+            Array.from(cmem).forEach((v, i) => {
+              if (v) updateTo = i;
+            });
+            Array.from(cmem).every((v, i) => {
+              if (i > updateTo) return false;
+              movePtr(i)
+              cellSet(v);
+              return true;
+            });
+            movePtr(cptr);
+            out.value += cout.replace(/\n/g,
+              '<br>');
+            onStop('end');
+            //TODO: Fast
+            //recompile bf to js
+          }
         }
       }
-    }
-  });
+    });
 });

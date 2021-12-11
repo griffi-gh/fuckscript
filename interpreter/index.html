@@ -15,6 +15,7 @@
     </div>
     <div id="buttons">
       <select id="speed">
+        <option value="-2">AOT [BETA]</option>
         <option value="-1">Immediate</option>
         <option value="0" selected>0ms</option>
         <option value="50">50ms</option>
@@ -29,6 +30,7 @@
     <output id="stdout" placeholder="Output"></output>
     <div id="actions">
       <button type="button" id="cp">Copy output</button>
+      <button type="button" id="upl-bt" onclick="_$id_('uploaded').click()">Open program</button>
     </div>
     <textarea name="" id="program" cols="30" rows="10" autocomplete="off" autocorrect="off" spellcheck="false" autocapitalize="off" placeholder="Brainfuck code"></textarea>
     <div id="autosave-notice">
@@ -41,5 +43,6 @@
       <br><a href="" id="ad-close">Close</a>
     </div>
   </main>
+  <input type="file" id="uploaded" style="display: none;">
 </body>
 </html>
