@@ -73,7 +73,9 @@ document.addEventListener('DOMContentLoaded', () => {
   $id('share').addEventListener('click', () => {
     navigator.share({
       url: fullUrlWithoutParams + '?source=share&c=' + encodeURIComponent($id('program').value)
-    }).catch(alert)
+    }).then(
+      _ => alert('shared')
+    ).catch(alert)
   });
 
   const cells = [];
