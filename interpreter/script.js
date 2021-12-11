@@ -194,8 +194,8 @@ addEventListener('load', () => {
     let ptrd;
 
     let mprog = prog + END;
-    mprog.replace(/\[\-\]/g, SUBLOOP);
-    mprog.replace(/\[\+\]/g, SUBLOOP);
+    mprog = mprog.replace(/\[\-\]/g, SUBLOOP);
+    mprog = mprog.replace(/\[\+\]/g, SUBLOOP);
 
     mprog.split('').forEach((v, i) => {
       const hnum = () => {
