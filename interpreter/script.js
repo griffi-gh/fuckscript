@@ -70,12 +70,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     reader.readAsText(file);
   });
+  let disableShare;
   $id('share').addEventListener('click', () => {
+    if (disableShare) return;
+    disableShare = true;
     navigator.share({
       url: fullUrlWithoutParams + '?source=share&c=' + encodeURIComponent($id('program').value)
-    }).then(
-      _ => alert('shared')
-    ).catch(alert)
+    }).then(_=> {
+      disableShare = false;
+    }).catch(error => {
+      disableShare = false;
+      if (error.name != 'AbortError') {
+        alert(error);
+      }
+    });
   });
 
   const cells = [];
