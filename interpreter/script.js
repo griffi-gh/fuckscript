@@ -10,8 +10,10 @@ addEventListener('load', () => {
     }
   }
 
-  $id('ad-close').style.fontSize = '0px';
-  setTimeout(() => $id('ad-close').style.fontSize = '', 2500);
+  try {
+    $id('ad-close').style.fontSize = '0px';
+    setTimeout(() => $id('ad-close').style.fontSize = '', 2500);
+  }catch(e) {}
 
   if (params.has('c')) {
     if (!params.has('save')) autosave = false;
@@ -41,6 +43,20 @@ addEventListener('load', () => {
   if ((localStorage.adClosed | 0) === 1) {
     $id('fuckscript-ad').remove();
   }
+
+  $id('cp').addEventListener('click', () => {
+    const out = $id('stdout');
+    try {
+      navigator.clipboard.writeText(out.value.slice(2).replace(/\<br\>/g, '\n')).then(() => {
+        alert('copied!');
+      });
+    } catch(e) {
+      out.select();
+      document.execCommand("copy");
+      alert('copied');
+    }
+  });
+
   const cells = [];
   const mem = new Uint8Array(30000);
   let ptr = 0;
@@ -105,7 +121,7 @@ addEventListener('load', () => {
     });
     movePtr(0);
     pc = 0;
-    out.value = '';
+    out.value = '> ';
   }
 
   resetState();
@@ -150,7 +166,7 @@ addEventListener('load', () => {
           if (cellGet()) pc = bracemap[pc-1]+1;
           break;
         case '.':
-          out.value += String.fromCharCode(cellGet());
+          out.value += String.fromCharCode(cellGet()).replace('\n', '<br>');
           out.scrollTo(99999999, 9999999);
           break;
         default:
