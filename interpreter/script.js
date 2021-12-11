@@ -131,6 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const mem = new Uint8Array(30000);
   let ptr = 0;
   let pc = 0;
+
   //
   function expandCellsTo(x) {
     if (x <= cells.length) return;
@@ -138,7 +139,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const l = cells.length;
     for (let i = 0; i < (x - l); i++) {
       const cell = document.createElement('div');
-      cell.innerHTML = '0';
+      cell.innerHTML = parseInt(localStorage.display ?? '0') ? '$00': '0';
       cell.classList.add('cell');
       $id('cells').appendChild(cell);
       cells.push(cell);
@@ -162,7 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   function cellSet(v) {
     mem[ptr] = v;
-    cells[ptr].innerHTML = (v & 0xFF).toString(10);
+    const display = parseInt(localStorage.display ?? '0');
+    let str = (v & 0xFF).toString(display ? 16: 10);
+    if (display) str = '$' + str.padStart(2, '0');
+    cells[ptr].innerHTML = str;
     //todo change base
   }
   function incCell() {
@@ -172,6 +176,16 @@ document.addEventListener('DOMContentLoaded', () => {
     cellSet(cellGet() - 1);
   }
 
+  $id('cells').addEventListener('click', () => {
+    localStorage.display = (localStorage.display??0) ^ 1;
+    console.log(localStorage.display)
+    const _ptr = ptr;
+    cells.forEach((v, i) => {
+      movePtr(i);
+      cellSet(cellGet());
+    });
+    movePtr(_ptr);
+  });
   $id('cells').addEventListener('overscroll', () => {
     expandCellsTo(cells.length + 50);
   });
