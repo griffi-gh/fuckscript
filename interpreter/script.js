@@ -3,6 +3,21 @@ window.location.protocol +
 "//" +
 window.location.host +
 window.location.pathname;
+
+async function fetchWithTimeout(resource, options = {}) {
+  const {
+    timeout = 8000
+  } = options;
+
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), timeout);
+  const response = await fetch(resource, {
+    ...options,
+    signal: controller.signal
+  });
+  clearTimeout(id);
+  return response;
+}
 document.addEventListener('DOMContentLoaded', () => {
   const $id = id => document.getElementById(id);
   window._$id_ = $id;
@@ -84,15 +99,16 @@ document.addEventListener('DOMContentLoaded', () => {
       }).catch(error => {
         disableShare = false;
         if (error.name != 'AbortError') {
-          alert(error);
+          alert('Unable to share the code right now\n' + error);
         }
       });
     };
     try {
       console.log('reqest\n'+shortener);
-      fetch(
+      fetchWithTimeout(
         shortener,
         {
+          timeout: 5000,
           method: 'POST'
         }
       ).then(res => {
@@ -104,14 +120,9 @@ document.addEventListener('DOMContentLoaded', () => {
               url = data.result.full_short_link;
               shareUrl();
             }
-          }).catch(_ => {
-            throw new Error('res')
-          });
-        }).catch(_=> {
-          throw new Error('fetch')
-        });
+          }).catch(shareUrl);
+        }).catch(shareUrl);
     } catch(e) {
-      console.log(e)
       shareUrl();
     }
   });
@@ -296,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
         case SUBLOOP:
           hnum();
-          num = 0;
+          num = null;
           js += 'm[p]=0;'
           break;
         default:
