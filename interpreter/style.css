@@ -23,6 +23,9 @@ header {
   align-items: center;
   grid-gap: 10px;
 }
+#share {
+  height: 32px;
+}
 #speed {
   padding: .2rem .2rem;
   font-size: 1.1em;

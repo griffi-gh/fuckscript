@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=, initial-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <title>Document</title>
+  <script src="https://unpkg.com/share-api-polyfill/dist/share-min.js" async="true"></script>
   <script src="script.js" type="text/javascript" charset="utf-8"></script>
   <link rel="stylesheet" href="style.css" type="text/css" media="all" />
   <!-- Chrome, Firefox OS and Opera -->
@@ -13,9 +14,9 @@
   <meta name="msapplication-navbutton-color" content="#800080">
   <!-- iOS Safari -->
   <meta name="apple-mobile-web-app-status-bar-style" content="#800080">
-
 </head>
-<body><header>
+<body>
+  <header>
     <div id="title">
       Brainfuck
     </div>
@@ -28,6 +29,7 @@
         <option value="100">Interpreter (100ms)</option>
         <option value="250">Interpreter (250ms)</option>
       </select>
+      <img id="share" src="share.png" alt="Share">
       <div id="run">
         Run
       </div>
