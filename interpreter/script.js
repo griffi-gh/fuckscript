@@ -73,17 +73,47 @@ document.addEventListener('DOMContentLoaded', () => {
   let disableShare;
   $id('share').addEventListener('click', () => {
     if (disableShare) return;
-    disableShare = true;
-    navigator.share({
-      url: fullUrlWithoutParams + '?source=share&c=' + encodeURIComponent($id('program').value)
-    }).then(_=> {
-      disableShare = false;
-    }).catch(error => {
-      disableShare = false;
-      if (error.name != 'AbortError') {
-        alert(error);
-      }
-    });
+    let url = fullUrlWithoutParams + '?source=share&c=' + encodeURIComponent($id('program').value)
+    const shortener = 'https://api.shrtco.de/v2/shorten?url=' + encodeURIComponent(url);
+    const shareUrl = () => {
+      disableShare = true;
+      navigator.share({
+        url: url
+      }).then(_=> {
+        disableShare = false;
+      }).catch(error => {
+        disableShare = false;
+        if (error.name != 'AbortError') {
+          alert(error);
+        }
+      });
+    };
+    try {
+      console.log('reqest\n'+shortener);
+      fetch(
+        shortener,
+        {
+          method: 'POST'
+        }
+      ).then(res => {
+          console.log('res')
+          res.json().then(data => {
+            console.log('data')
+            console.log(JSON.stringify(data))
+            if (data && data.ok) {
+              url = data.result.full_short_link;
+              shareUrl();
+            }
+          }).catch(_ => {
+            throw new Error('res')
+          });
+        }).catch(_=> {
+          throw new Error('fetch')
+        });
+    } catch(e) {
+      console.log(e)
+      shareUrl();
+    }
   });
 
   const cells = [];
