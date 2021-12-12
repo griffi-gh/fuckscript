@@ -194,9 +194,13 @@ document.addEventListener('DOMContentLoaded', () => {
   movePtr(0);
 
   const out = $id('stdout');
+  const stdin = $id('stdin');
 
   let prog = '';
   let bracemap = [];
+
+
+  let interpInPos = 0;
 
   function resetState() {
     mem.fill(0);
@@ -206,6 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
     movePtr(0);
     pc = 0;
     out.value = '> ';
+    interpInPos = 0;
   }
 
   resetState();
@@ -253,6 +258,9 @@ document.addEventListener('DOMContentLoaded', () => {
           out.value += String.fromCharCode(cellGet()).replace('\n', '<br>');
           out.scrollTo(99999999, 9999999);
           break;
+        case ',':
+          cellSet((stdin.value[interpInPos++] ?? '\x00').charCodeAt());
+          break;
         default:
           break;
       }
@@ -264,7 +272,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const END = '\x00';
     const SUBLOOP = String.fromCharCode(0xFFFF);
 
-    let js = 'let m=new Uint8Array(30000);let p=0;let o="";let c=String.fromCharCode;';
+    let js = 'let m=new Uint8Array(30000);let p=0;let o="";let c=String.fromCharCode;i=(i??"").split("").map(v=>v.charCodeAt());';
     let num;
     let ptrd;
 
@@ -314,6 +322,7 @@ document.addEventListener('DOMContentLoaded', () => {
           break;
         case ',':
           hnum();
+          js += 'm[p]=i.shift();'
           //todo
           break;
         case END:
@@ -330,7 +339,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     js += 'return [o,m,p]';
     console.log(js)
-    return new Function(js);
+    return (new Function('i', js));
   }
 
   let int;
@@ -367,7 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
             onStop('end');
           } else if (s == -2) {
             resetState();
-            const state = compile()();
+            const state = compile()(stdin.value);
             const cptr = state.pop();
             const cmem = state.pop();
             const cout = state.pop();
