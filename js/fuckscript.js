@@ -48,6 +48,16 @@ function Fuckscript(str) {
       name: 'u8',
       generic: 'num',
       size: ()=>1,
+      xset: (t, arg) => {
+        let sv;
+        console.log(arg.join());
+        if (arg[0] == 'char') {
+          sv = arg[1].charCodeAt(0) & 0xFF;
+        } else {
+          sv = parseInt(arg[0]);
+        }
+        setAt(t.ptr, sv);
+      },
       set: (t, val) => {
         setAt(t.ptr, parseInt(val));
       },
@@ -62,13 +72,14 @@ function Fuckscript(str) {
           <+>]>+>>]<<<<<]>[-]>>[>++++++[-<++++++++>]<.<<+>+>[-]]<[<[->-<]++++++[->++++++++
           <]>.[-]]<<++++++[-<++++++++>]<.[-]<<[-<+>]<
           [-]`).replace(/\s/g, '');
-        copy(t.ptr, work, work+1);
-        point(work);
         switch (as) {
           default: //if none or 'ascii'
+            point(t.ptr);
             bf('.');
             break;
           case 'int':
+            copy(t.ptr, work, work+1);
+            point(work);
             bf(printAsInt);
             break;
         }
@@ -343,7 +354,7 @@ function Fuckscript(str) {
           case 'set':
             const setTarg = vars[args[0]];
             switch (args[1].toLowerCase().trim()) {
-              case 'val':
+              case '_val_':
                 let cval = args[2].trim();
                 if (cval[2] == '"' && cval[0] == '"' && (cval.length === 3)) {
                   cval = cval.charCodeAt(1);
@@ -351,6 +362,14 @@ function Fuckscript(str) {
                   cval = parseInt(cval);
                 }
                 types[setTarg.type].set(setTarg, cval);
+                break;
+              case 'val':
+                const type = types[setTarg.type];
+                if (type.xset) {
+                  type.xset(setTarg, args.slice(2));
+                } else {
+                  type.set(setTarg, parseInt(args[2]));
+                }
                 break;
               case 'op':
                 if (1) {
